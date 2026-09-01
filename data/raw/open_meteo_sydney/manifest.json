@@ -1,0 +1,20 @@
+{
+  "source": "Open-Meteo Historical Weather API",
+  "model": "ERA5",
+  "files": [
+    {
+      "file": "sydney_era5_daily.csv",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-33.8688&longitude=151.2093&start_date=2016-01-01&end_date=2022-12-31&timezone=Australia%2FSydney&wind_speed_unit=kmh&precipitation_unit=mm&format=csv&daily=precipitation_sum%2Cwind_gusts_10m_max%2Cwind_speed_10m_max%2Cwind_direction_10m_dominant",
+      "retrieved_utc": "2026-09-01T04:35:57.745683+00:00",
+      "bytes": 76329,
+      "sha256": "c8772a7889768d36d466022f0372216524dbdf68c789d101140cbdfd1a46c42b"
+    },
+    {
+      "file": "sydney_era5_hourly.csv",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-33.8688&longitude=151.2093&start_date=2016-01-01&end_date=2022-12-31&timezone=Australia%2FSydney&wind_speed_unit=kmh&precipitation_unit=mm&format=csv&hourly=precipitation%2Cwind_speed_10m%2Cwind_direction_10m%2Cwind_gusts_10m",
+      "retrieved_utc": "2026-09-01T04:36:03.818862+00:00",
+      "bytes": 2165872,
+      "sha256": "8bc3c75c5e8384b65be8dc079e2be0b52b37e1f3fd544e4fbfefac043d0f5204"
+    }
+  ]
+}
