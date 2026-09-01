@@ -1,6 +1,6 @@
 # Pre-registration: Sydney wind and next-day rainfall
 
-**Frozen at commit:** 2026-09-01, before downloading or inspecting wind outcome data
+**Frozen at commit:** 2026-09-01, before downloading or inspecting 2016-2022 wind outcome data
 **Question doc:** `docs/science-superpowers/questions/2026-09-01-wind-next-day-rainfall.md`
 **Analysis plan:** `docs/science-superpowers/plans/2026-09-01-wind-next-day-rainfall.md`
 
@@ -11,15 +11,16 @@
 
 ## Primary analysis (exact)
 
-- **Primary contrast:** Compare `WindGustSpeed` between `RainTomorrow = 0` and `RainTomorrow = 1` using group `n`, mean, median, standard deviation, Q1, Q3, median difference, and a 95% bootstrap interval for the median difference.
+- **Source:** Open-Meteo Historical Weather API using ERA5 at latitude `-33.8688`, longitude `151.2093`, dates 2016-2022, timezone `Australia/Sydney`, speed unit km/h, and precipitation unit mm. This is a reanalysis estimate, not a direct station observation.
+- **Primary contrast:** Compare `WindGustSpeed` between `RainTomorrow = 0` and `RainTomorrow = 1` using group `n`, mean, median, standard deviation, Q1, Q3, median difference, and a 95% bootstrap interval for the median difference. `WindGustSpeed` is the API's daily `wind_gusts_10m_max` in km/h.
 - **Grouped rainfall contrast:** Calculate `RainTomorrow` rate within four `WindGustSpeedGroup` quartiles. Quartile cut points are computed once from the cleaned overall sample and reused for every season. Report rates, counts, and 95% bootstrap intervals overall and within each season.
-- **Supporting measures:** Repeat descriptive summaries for `WindSpeed9am`, `WindSpeed3pm`, and `WindSpeedChange = WindSpeed3pm - WindSpeed9am` when both component values exist.
+- **Supporting measures:** Repeat descriptive summaries for `WindSpeed9am`, `WindSpeed3pm`, and `WindSpeedChange = WindSpeed3pm - WindSpeed9am` when both component values exist; 9am and 3pm are exact local-hour `wind_speed_10m` values in km/h.
 - **Direction:** Use `WindGustDir` only as a categorical supporting analysis if standardised category counts are adequate; never encode direction as an ordered number.
 - **Season:** `summer` = December-February, `autumn` = March-May, `winter` = June-August, `spring` = September-November.
 - **Date:** Store displayed dates as `YYYY-M-D`, for example `2026-8-31`.
-- **Outcome:** `RainTomorrow` is integer `0` for no rain and `1` for rain.
+- **Outcome:** Use API daily `precipitation_sum` as local-day `RainMm`; `RainTomorrow` is integer `1` when the next local calendar day's `RainMm > 0`, otherwise `0`. Exclude 2022-12-31 because the next day is outside the fixed window.
 - **Inclusion:** Keep one valid observation per agreed Sydney date with a documented station/location and an established binary outcome. Do not impute missing predictors in primary summaries.
-- **Exclusion:** Remove exact duplicates, negative wind speeds, invalid dates, unrecognised outcomes, and records whose required primary field is missing. Valid extreme speeds remain unless the source marks them invalid.
+- **Exclusion:** Remove exact duplicates, negative wind/gust speeds, invalid dates, unrecognised outcomes, and records whose required primary field is missing. Valid extreme speeds remain unless the source marks them invalid. The ERA5 reanalysis representation and grid-cell mismatch are retained and reported as limitations.
 - **Uncertainty:** Use a fixed random seed and 2,000 bootstrap resamples for intervals when the relevant group has at least 10 observations; otherwise report the estimate and flag it as low effective sample size without an interval.
 
 ## Prediction and falsifiability

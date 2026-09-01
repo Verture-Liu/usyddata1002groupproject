@@ -6,7 +6,7 @@
 
 **Design:** Exploratory observational analysis of daily records, comparing wind measures by binary next-day rainfall and stratifying by season.
 
-**Data:** Independently collected BOM Sydney daily observations, one row per date, with wind observations, date, location/station metadata, and a rainfall-derived or group-aligned `RainTomorrow` outcome coded 0/1.
+**Data:** Independently collected Open-Meteo ERA5 historical weather data for a fixed Sydney coordinate, covering 2016-01-01 through 2022-12-31, with daily and hourly API responses aggregated to one local-date row.
 
 **Primary analysis:** Compare `WindGustSpeed` distributions by `RainTomorrow`; estimate next-day rainfall rates across pre-specified `WindGustSpeed` quartiles, overall and within `Season`; use `WindSpeed9am`, `WindSpeed3pm`, and `WindSpeedChange` as supporting measures.
 
@@ -23,32 +23,33 @@
 
 ## Data-flow and files
 
-- `data/raw/`: downloaded BOM source files and source metadata.
-- `data/cleaned/wind_sydney_clean.csv`: validated daily wind table.
+- `data/raw/`: downloaded Open-Meteo daily/hourly API responses and source metadata.
+- `data/cleaned/wind_sydney_clean.csv`: validated daily Sydney wind table.
 - `data/derived/wind_sydney_analysis.csv`: cleaned table with season, binary outcome, speed change, and speed group.
 - `outputs/tables/`: quality audit and grouped descriptive summaries.
 - `outputs/figures/`: two main matplotlib figures.
-- `src/download_bom_wind.py`: download source files and record URLs/metadata.
+- `src/download_open_meteo_wind.py`: download API responses and record URLs/metadata.
 - `src/clean_wind_data.py`: parse, standardise, validate, and write cleaned data.
 - `src/analyse_wind.py`: generate summaries, bootstrap intervals, and figures.
 
 ## Task 1: Acquire and document the independent source
 
-- [ ] Download BOM Sydney daily observation files for the selected overlapping date range, preserving each original file unchanged.
-- [ ] Save a source manifest with URL, retrieval date, station/location description, units, date coverage, and data restrictions.
-- [ ] Validate that the source contains date, maximum gust speed, 9am speed, 3pm speed, wind directions, and a rainfall field or an explicit join key for the group's `RainTomorrow` table.
+- [ ] Download Open-Meteo ERA5 daily and hourly API responses for latitude `-33.8688`, longitude `151.2093`, dates `2016-01-01` through `2022-12-31`, timezone `Australia/Sydney`, speed unit `kmh`, and precipitation unit `mm`, preserving each original response unchanged.
+- [ ] Save a source manifest with complete query URLs, retrieval date, coordinate, model, timezone, units, date coverage, and data restrictions.
+- [ ] Validate that the responses contain daily precipitation, daily maximum gust, daily dominant direction, hourly wind speed, and hourly wind direction.
 
 ## Task 2: Clean and standardise
 
-- [ ] Parse dates and write them as `YYYY-M-D` strings while retaining a parsed date internally for sorting and next-day alignment.
+- [ ] Parse the API's `Australia/Sydney` timestamps, keep one local calendar date per row, and write dates as `YYYY-M-D` strings while retaining parsed dates internally.
 - [ ] Standardise season with `month.map({12:'summer',1:'summer',2:'summer',3:'autumn',4:'autumn',5:'autumn',6:'winter',7:'winter',8:'winter',9:'spring',10:'spring',11:'spring'})`.
-- [ ] Convert wind-speed fields to numeric km/h, treating source missing markers as missing.
+- [ ] Convert wind-speed and gust fields to numeric km/h and precipitation to mm, treating source missing markers as missing.
 - [ ] Reject negative wind speeds and impossible non-category values only after recording counts; retain valid high values.
 - [ ] Standardise direction labels by trimming whitespace and uppercasing, then store them as categorical values.
 - [ ] Remove exact duplicate rows and resolve duplicate dates using a documented station/date rule; do not silently keep the first row.
-- [ ] Create `WindSpeedChange = WindSpeed3pm - WindSpeed9am` only when both values are present.
+- [ ] Create `WindGustSpeed` from daily `wind_gusts_10m_max`; create `WindSpeed9am` and `WindSpeed3pm` from exact local 09:00 and 15:00 hourly `wind_speed_10m`; create `WindSpeedChange = WindSpeed3pm - WindSpeed9am` only when both values are present.
+- [ ] Create `WindGustDir` from daily `wind_direction_10m_dominant`, convert degrees to 16 compass categories, and treat it as categorical.
 - [ ] Create `WindGustSpeedGroup` from quartiles calculated once on the cleaned overall sample, labelled `Q1`, `Q2`, `Q3`, `Q4`; do not recompute cut points by season.
-- [ ] Align or derive `RainTomorrow` as integer 0/1 and exclude rows where the outcome cannot be established from the primary analysis.
+- [ ] Use daily `precipitation_sum` as `RainMm`, shift the next local date's value onto the current date, and derive `RainTomorrow = 1` when next-day `RainMm > 0`, otherwise `0`; exclude 2022-12-31 because its next day is outside the fixed window.
 
 ## Task 3: Validate cleaning
 
@@ -73,6 +74,6 @@
 ## Task 6: Interpret and package
 
 - [ ] Write one numerical finding tied to a table/figure, one seasonal consistency/inconsistency statement, and one limitation.
-- [ ] Explicitly discuss the BOM station mismatch and daily rainfall time definition.
+- [ ] Explicitly discuss the ERA5 reanalysis/grid-cell limitation and the daily precipitation time definition.
 - [ ] Save raw source files, cleaned/derived data, scripts, summaries, figures, and provenance notes under the project directory.
 - [ ] Rerun the full pipeline from raw data and verify the outputs before reporting any conclusion.
