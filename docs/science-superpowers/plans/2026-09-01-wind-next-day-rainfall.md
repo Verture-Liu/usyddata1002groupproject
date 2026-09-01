@@ -29,7 +29,7 @@
 - `outputs/tables/`: quality audit and grouped descriptive summaries.
 - `outputs/figures/`: two main matplotlib figures.
 - `src/download_open_meteo_wind.py`: download API responses and record URLs/metadata.
-- `src/clean_wind_data.py`: parse, standardise, validate, and write cleaned data.
+- `src/clean_open_meteo_wind.py`: parse, standardise, validate, and write cleaned data.
 - `src/analyse_wind.py`: generate summaries, bootstrap intervals, and figures.
 
 ## Task 1: Acquire and document the independent source

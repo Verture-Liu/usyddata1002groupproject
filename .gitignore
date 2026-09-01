@@ -5,3 +5,4 @@ data/raw/bom_sydney_daily/
 data/raw/meteostat_sydney_airport/
 src/download_bom_wind.py
 src/download_meteostat_wind.py
+src/clean_wind_data.py
