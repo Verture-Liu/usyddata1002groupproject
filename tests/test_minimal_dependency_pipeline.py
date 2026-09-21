@@ -17,7 +17,11 @@ DELIVERED_SCRIPTS = [
     ROOT / "final_state/clean_open_meteo_wind.py",
     ROOT / "final_state/analyse_wind.py",
 ]
-FORBIDDEN_IMPORTS = {"numpy", "requests", "bs4", "lxml"}
+EXPECTED_SCRIPT_IMPORTS = {
+    "download_open_meteo_wind.py": {"pandas"},
+    "clean_open_meteo_wind.py": {"pandas"},
+    "analyse_wind.py": {"pandas", "matplotlib"},
+}
 EXPECTED_FINAL_FILES = {
     "analyse_wind.py",
     "clean_open_meteo_wind.py",
@@ -44,11 +48,11 @@ def imported_top_level_modules(path: Path) -> set[str]:
 
 
 class MinimalDependencyTests(unittest.TestCase):
-    def test_active_scripts_have_no_forbidden_imports(self):
+    def test_scripts_import_only_pandas_and_matplotlib(self):
         for path in ACTIVE_SCRIPTS + DELIVERED_SCRIPTS:
             with self.subTest(path=path.name):
                 imported = imported_top_level_modules(path)
-                self.assertFalse(imported & FORBIDDEN_IMPORTS)
+                self.assertEqual(imported, EXPECTED_SCRIPT_IMPORTS[path.name])
 
     def test_only_pandas_and_matplotlib_are_direct_requirements(self):
         requirements = {
@@ -106,19 +110,26 @@ class MinimalDependencyTests(unittest.TestCase):
 
 
 class DownloaderTests(unittest.TestCase):
-    def test_fetch_uses_urlopen_and_returns_response_bytes(self):
-        from src.download_open_meteo_wind import fetch
-
-        response = MagicMock()
-        response.__enter__.return_value.read.return_value = b"csv-content"
+    def test_download_uses_pandas_and_writes_two_csv_files(self):
+        daily = MagicMock()
+        hourly = MagicMock()
         with patch(
-            "src.download_open_meteo_wind.urlopen", return_value=response
-        ) as mocked_urlopen:
-            self.assertEqual(fetch({"format": "csv"}), b"csv-content")
+            "src.download_open_meteo_wind.pd.read_csv",
+            side_effect=[daily, hourly],
+        ) as mocked_read_csv:
+            from src.download_open_meteo_wind import download
 
-        requested_url = mocked_urlopen.call_args.args[0]
-        self.assertIn("format=csv", requested_url)
-        self.assertEqual(mocked_urlopen.call_args.kwargs["timeout"], 180)
+            download()
+
+        self.assertEqual(mocked_read_csv.call_count, 2)
+        self.assertEqual(mocked_read_csv.call_args_list[0].kwargs["skiprows"], 3)
+        self.assertEqual(mocked_read_csv.call_args_list[1].kwargs["skiprows"], 3)
+        daily.to_csv.assert_called_once_with(
+            "data/raw/open_meteo_sydney/sydney_era5_daily.csv", index=False
+        )
+        hourly.to_csv.assert_called_once_with(
+            "data/raw/open_meteo_sydney/sydney_era5_hourly.csv", index=False
+        )
 
 
 class CleanerTests(unittest.TestCase):
